@@ -55,3 +55,7 @@ def get_word(states):
         next_letter = state['target']
 
     return word
+if __name__ == '__main__':
+    states = get_states()
+    word = ' '.join(get_word(states))
+    print(f"Most probable word: {word}")
