@@ -28,9 +28,9 @@ def dijkstra(puzzle):
     # that achieves the minimal distance to the starting state of puzzle.
     prev = {initial.to_string(): None}
 
+    expanded_states = 0
     while len(fringe) > 0:
-        while fringe[0][1].to_string() in concluded:
-            heapq.heappop(fringe)
+        expanded_states += 1
         _, state = heapq.heappop(fringe)
         state_name = state.to_string()
         if state == goal:
@@ -44,10 +44,10 @@ def dijkstra(puzzle):
             new_distance = distances[state_name] + 1
             if current_distance > new_distance:
                 distances[new_state_name] = new_distance
-                current_distance = new_distance
                 prev[new_state_name] = state
-            heapq.heappush(fringe, (current_distance, new_state))
+                heapq.heappush(fringe, (new_distance, new_state))
         concluded.add(state_name)
+    print "Expanded states: {}".format(expanded_states)
     return prev
 
 

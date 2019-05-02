@@ -33,8 +33,6 @@ def a_star(puzzle):
 
     expanded_states = 0
     while len(fringe) > 0:
-        while fringe[0][1].to_string() in concluded:
-            heapq.heappop(fringe)
         expanded_states += 1
         cost, state = heapq.heappop(fringe)
         state_name = state.to_string()
@@ -49,11 +47,10 @@ def a_star(puzzle):
             new_distance = distances[state_name] + 1
             if current_distance > new_distance:
                 distances[new_state_name] = new_distance
-                current_distance = new_distance
                 prev[new_state_name] = state
-            heuristic_distance = new_state.get_manhattan_distance(goal)
-            total_distance = current_distance + heuristic_distance
-            heapq.heappush(fringe, (total_distance, new_state))
+                heuristic_distance = new_state.get_manhattan_distance(goal)
+                total_distance = new_distance + heuristic_distance
+                heapq.heappush(fringe, (total_distance, new_state))
         concluded.add(state_name)
     print "Expanded {} states".format(expanded_states)
     return prev
