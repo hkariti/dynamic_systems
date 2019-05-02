@@ -29,9 +29,9 @@ def dijkstra(puzzle):
     prev = {initial.to_string(): None}
 
     while len(fringe) > 0:
-        while fringe[0] in concluded:
+        while fringe[0][1].to_string() in concluded:
             heapq.heappop(fringe)
-        state = heapq.heappop(fringe)
+        _, state = heapq.heappop(fringe)
         state_name = state.to_string()
         if state == goal:
             break
@@ -44,9 +44,10 @@ def dijkstra(puzzle):
             new_distance = distances[state_name] + 1
             if current_distance > new_distance:
                 distances[new_state_name] = new_distance
+                current_distance = new_distance
                 prev[new_state_name] = state
-            heappush(fringe, new_state)
-        concluded.add(state)
+            heapq.heappush(fringe, (current_distance, new_state))
+        concluded.add(state_name)
     return prev
 
 

@@ -1,3 +1,11 @@
+def get_action(state1, state2):
+    actions = state1.get_actions()
+    for a in actions:
+        candidate_state = state1.apply_action(a)
+        if candidate_state == state2:
+            return a
+    assert False, 'disconnected states' # This shouldn't happen
+
 def traverse(goal_state, prev):
     '''
     extract a plan using the result of dijkstra's algorithm
@@ -7,8 +15,12 @@ def traverse(goal_state, prev):
     (goal_state, None)
     '''
     result = [(goal_state, None)]
-    # remove the following line and complete the algorithm
-    assert False
+    current_state = goal_state
+    while prev[current_state.to_string()]:
+        prev_state = current_state
+        current_state = prev[prev_state.to_string()]
+        action = get_action(current_state, prev_state)
+        result.append((current_state, action))
     return result
 
 
