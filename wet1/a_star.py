@@ -31,6 +31,7 @@ def a_star(puzzle):
     # that achieves the minimal distance to the starting state of puzzle.
     prev = {initial.to_string(): None}
 
+    alpha = 9999 # The weight of the heuristic function in the cost
     expanded_states = 0
     while len(fringe) > 0:
         expanded_states += 1
@@ -49,7 +50,7 @@ def a_star(puzzle):
                 distances[new_state_name] = new_distance
                 prev[new_state_name] = state
                 heuristic_distance = new_state.get_manhattan_distance(goal)
-                total_distance = new_distance + heuristic_distance
+                total_distance = new_distance + alpha*heuristic_distance
                 heapq.heappush(fringe, (total_distance, new_state))
         concluded.add(state_name)
     print "Expanded {} states".format(expanded_states)
