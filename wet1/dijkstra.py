@@ -66,13 +66,21 @@ if __name__ == '__main__':
     initial_state = State()
     actions = [
         'r', 'r', 'd', 'l', 'u', 'l', 'd', 'd', 'r', 'r', 'u', 'l', 'd', 'r', 'u', 'u', 'l', 'd', 'l', 'd', 'r', 'r',
-        'u', 'l', 'u'
+        'u', 'l', 'u',
+    ]
+    # Hard puzzle: solution is 25 steps long
+    hard_actions = [
+        'r', 'r', 'd', 'l', 'u', 'l', 'd', 'd', 'r', 'r', 'u', 'l', 'd', 'r', 'u', 'u', 'l', 'd', 'l', 'd', 'r', 'r',
+        'u', 'l', 'u', 'l', 'd', 'd', 'r',
+        'l', 'r', 'u', 'l', 'd', 'r', 'r',
+        'u'
     ]
     goal_state = initial_state
-    for a in actions:
+    puzzle_actions = hard_actions
+    for a in puzzle_actions:
         goal_state = goal_state.apply_action(a)
     puzzle = Puzzle(initial_state, goal_state)
-    print('original number of actions:{}'.format(len(actions)))
+    print('original number of actions:{}'.format(len(puzzle_actions)))
     solution_start_time = datetime.datetime.now()
     solve(puzzle)
     print('time to solve {}'.format(datetime.datetime.now()-solution_start_time))
