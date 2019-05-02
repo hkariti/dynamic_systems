@@ -2,6 +2,7 @@ from puzzle import *
 from planning_utils import *
 import heapq
 import datetime
+import numpy as np
 
 
 def a_star(puzzle):
@@ -31,9 +32,27 @@ def a_star(puzzle):
     prev = {initial.to_string(): None}
 
     while len(fringe) > 0:
-        # remove the following line and complete the algorithm
-        assert False
-
+        while fringe[0][1].to_string() in concluded:
+            heapq.heappop(fringe)
+        cost, state = heapq.heappop(fringe)
+        state_name = state.to_string()
+        if state == goal:
+            break
+        actions = state.get_actions()
+        for a in actions:
+            new_state = state.apply_action(a)
+            new_state_name = new_state.to_string()
+            current_distance = distances.get(new_state_name, np.inf)
+            # Each neighboring states have a distance of 1
+            new_distance = distances[state_name] + 1
+            if current_distance > new_distance:
+                distances[new_state_name] = new_distance
+                current_distance = new_distance
+                prev[new_state_name] = state
+            heuristic_distance = new_state.get_manhattan_distance(goal)
+            total_distance = current_distance + heuristic_distance
+            heapq.heappush(fringe, (total_distance, new_state))
+        concluded.add(state_name)
     return prev
 
 
