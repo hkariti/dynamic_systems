@@ -2,6 +2,7 @@ from puzzle import *
 from planning_utils import *
 import heapq
 import datetime
+import numpy as np
 
 
 def dijkstra(puzzle):
@@ -28,8 +29,24 @@ def dijkstra(puzzle):
     prev = {initial.to_string(): None}
 
     while len(fringe) > 0:
-        # remove the following line and complete the algorithm
-        assert False
+        while fringe[0] in concluded:
+            heapq.heappop(fringe)
+        state = heapq.heappop(fringe)
+        state_name = state.to_string()
+        if state == goal:
+            break
+        actions = state.get_actions()
+        for a in actions:
+            new_state = state.apply_action(a)
+            new_state_name = new_state.to_string()
+            current_distance = distances.get(new_state_name, np.inf)
+            # Each neighboring states have a distance of 1
+            new_distance = distances[state_name] + 1
+            if current_distance > new_distance:
+                distances[new_state_name] = new_distance
+                prev[new_state_name] = state
+            heappush(fringe, new_state)
+        concluded.add(state)
     return prev
 
 
