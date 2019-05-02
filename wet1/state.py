@@ -70,6 +70,15 @@ class State:
         new_state._array[pos2[0]][pos2[1]], new_state._array[pos1[0]][pos1[1]] = new_state._array[pos1[0]][pos1[1]], new_state._array[pos2[0]][pos2[1]]
         return new_state
 
+    def get_incorrect_tiles(self, goal):
+        incorrect = 0
+        for i in range(0, 9):
+            self_location = self._get_location_char(str(i))
+            goal_location = goal._get_location_char(str(i))
+            diff = self_location != goal_location
+            incorrect += diff
+        return incorrect
+
     def get_manhattan_distance(self, other):
         total_distance = 0
         for i in range(1, 9):
