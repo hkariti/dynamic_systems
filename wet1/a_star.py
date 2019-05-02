@@ -31,9 +31,11 @@ def a_star(puzzle):
     # that achieves the minimal distance to the starting state of puzzle.
     prev = {initial.to_string(): None}
 
+    expanded_states = 0
     while len(fringe) > 0:
         while fringe[0][1].to_string() in concluded:
             heapq.heappop(fringe)
+        expanded_states += 1
         cost, state = heapq.heappop(fringe)
         state_name = state.to_string()
         if state == goal:
@@ -53,6 +55,7 @@ def a_star(puzzle):
             total_distance = current_distance + heuristic_distance
             heapq.heappush(fringe, (total_distance, new_state))
         concluded.add(state_name)
+    print "Expanded {} states".format(expanded_states)
     return prev
 
 
