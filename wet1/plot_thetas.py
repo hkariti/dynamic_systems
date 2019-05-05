@@ -1,9 +1,9 @@
 import json
 from matplotlib import pyplot as plt
 
-unstable_file = open("thetas.unstable.feedforward.json")
-half_unstable_file = open("thetas.half_unstable.feedforward.json")
-stable_file = open("thetas.stable.feedforward.json")
+unstable_file = open("thetas.unstable.force_limit.json")
+half_unstable_file = open("thetas.half_unstable.force_limit.json")
+stable_file = open("thetas.stable.force_limit.json")
 
 unstable_thetas = json.load(unstable_file)
 half_unstable_thetas = json.load(half_unstable_file)
@@ -15,6 +15,6 @@ plt.semilogy(half_unstable_thetas)
 plt.semilogy(stable_thetas)
 plt.xlabel('Iteration')
 plt.ylabel('Theta [rad]')
-plt.title('Pole angle over time (feedforward)')
-plt.legend(['$\\theta_{unstable}$', '$0.5 \\theta_{unstable}$', r'$\frac{\pi} {10}$'])
+plt.title('Pole angle over time (with force limit)')
+plt.legend([r'$0.12\pi$', '$0.06\pi$', r'$\frac{\pi} {10}$'])
 plt.show()
