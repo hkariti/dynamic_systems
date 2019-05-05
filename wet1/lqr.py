@@ -1,6 +1,6 @@
 import numpy as np
 from cartpole_cont import CartPoleContEnv
-
+import json
 
 def get_A(cart_pole_env):
     '''
@@ -110,7 +110,7 @@ def print_diff(iteration, planned_theta, actual_theta, planned_action, actual_ac
 
 
 if __name__ == '__main__':
-    env = CartPoleContEnv(initial_theta=np.pi * 0.37)
+    env = CartPoleContEnv(initial_theta=np.pi * 0.1)
     # the following is an example to start at a different theta
     # env = CartPoleContEnv(initial_theta=np.pi * 0.25)
 
@@ -127,10 +127,12 @@ if __name__ == '__main__':
     is_done = False
     iteration = 0
     is_stable_all = []
+    thetas = []
     while not is_done:
         # print the differences between planning and execution time
         predicted_theta = xs[iteration].item(2)
         actual_theta = actual_state[2]
+        thetas.append(actual_theta)
         predicted_action = us[iteration].item(0)
         actual_action = (Ks[iteration] * np.expand_dims(actual_state, 1)).item(0)
         print_diff(iteration, predicted_theta, actual_theta, predicted_action, actual_action)
@@ -149,3 +151,5 @@ if __name__ == '__main__':
     # print if LQR succeeded
     print('valid episode: {}'.format(valid_episode))
 
+    print("Thetas:")
+    print(json.dumps(thetas))
