@@ -110,7 +110,7 @@ def print_diff(iteration, planned_theta, actual_theta, planned_action, actual_ac
 
 
 if __name__ == '__main__':
-    env = CartPoleContEnv(initial_theta=np.pi * 0.1)
+    env = CartPoleContEnv(initial_theta=np.pi * 0.37 * 0.5)
     # the following is an example to start at a different theta
     # env = CartPoleContEnv(initial_theta=np.pi * 0.25)
 
@@ -140,7 +140,7 @@ if __name__ == '__main__':
         # make action in range
         actual_action = max(env.action_space.low.item(0), min(env.action_space.high.item(0), actual_action))
         actual_action = np.array([actual_action])
-        actual_state, reward, is_done, _ = env.step(actual_action)
+        actual_state, reward, is_done, _ = env.step(np.array([predicted_action]))
         is_stable = reward == 1.0
         is_stable_all.append(is_stable)
         env.render()
