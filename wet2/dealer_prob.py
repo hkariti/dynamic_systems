@@ -16,7 +16,7 @@ def get_card():
 def calc_prob(begin_value):
     results = {}
     for i in range(NUM_EXPERIMENTS):
-        sum1 = 2 + get_card()
+        sum1 = begin_value + get_card()
         hits = 0
         while sum1 < 17:
             if sum1 > 21:
@@ -32,6 +32,7 @@ def calc_prob(begin_value):
 
     return results
 
-for i in range(2, 12):
-    res = calc_prob(i)
-    print i, res, sum(res.values())
+if __name__ == '__main__':
+    for i in range(2, 12):
+        res = calc_prob(i)
+        print i, res, sum(res.values())
