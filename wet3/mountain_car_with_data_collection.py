@@ -11,6 +11,9 @@ import gym
 from gym import spaces
 from gym.utils import seeding
 
+
+pos_mu = pos_sigma = speed_mu = speed_sigma = np.nan()
+
 class MountainCarWithResetEnv(gym.Env):
     metadata = {
         'render.modes': ['human', 'rgb_array'],
@@ -170,6 +173,7 @@ def data_stats(data):
     
     return pos_mu, pos_sigma, speed_mu, speed_sigma
 
+
 def e(s):
     # Implementation of RBF features
 
@@ -193,7 +197,7 @@ def e(s):
 def feat(s, a):
     N_a = 3
     e_s = e(s)
-    N_f = np.size(e)
+    N_f = np.size(e_s)
     feats = np.zeros([N_f * N_a]) 
     np.put(feats, range(a*N_f, (a+1)*N_f), e_s[:])
     return feats
