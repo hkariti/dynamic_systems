@@ -192,10 +192,10 @@ def e(s):
     
 def feat(s, a):
     N_a = 3
-    e = e(s)
+    e_s = e(s)
     N_f = np.size(e)
     feats = np.zeros([N_f * N_a]) 
-    np.put(feats, range(a*N_f, (a+1)*N_f), e[:])
+    np.put(feats, range(a*N_f, (a+1)*N_f), e_s[:])
     return feats
                     
                 
