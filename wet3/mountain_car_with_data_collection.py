@@ -12,7 +12,7 @@ from gym import spaces
 from gym.utils import seeding
 
 
-pos_mu = pos_sigma = speed_mu = speed_sigma = np.nan()
+pos_mu = pos_sigma = speed_mu = speed_sigma = 0
 
 class MountainCarWithResetEnv(gym.Env):
     metadata = {
@@ -134,30 +134,32 @@ class MountainCarWithResetEnv(gym.Env):
             self.viewer = None
 
 # %% LSPI 
-def lspi_data_sample():
+def lspi_data_sample(N = 100000):
     env = MountainCarWithResetEnv()
     goal_pos = 0.5
     min_pos = -1.2
     max_pos = 0.6
     min_speed = -0.07
     max_speed = 0.07
-    N_speed = 100
-    N_pos = 1000
     data = []
-    for pos in np.linspace(min_pos, max_pos, num=N_pos):
-        for speed in np.linspace(min_speed, max_speed, num=N_speed):
-            for action in [0, 1, 2]:
-                res = {'s' : np.array([pos, speed]), 'a' : action}
-                if pos >= goal_pos :
-                    res['r'] = 1
-                    res['s_next'] = np.array([pos, speed])
-                else:
-                    env.reset_specific(pos, speed)
-                    s_next, reward, _ , _ = env.step(action)
-                    res['r'] = reward
-                    res['s_next'] = s_next
-                
-                data.append(res)
+    for i in range(N):
+    #for pos in np.linspace(min_pos, max_pos, num=N_pos):
+        #for speed in np.linspace(min_speed, max_speed, num=N_speed):
+            #for action in [0, 1, 2]:
+        pos = (max_pos - min_pos) * np.random.sample() + min_pos
+        speed = (max_speed - min_speed) * np.random.sample() + min_speed
+        action = np.random.choice(3)
+        res = {'s' : np.array([pos, speed]), 'a' : action}
+        if pos >= goal_pos :
+            res['r'] = 1
+            res['s_next'] = np.array([pos, speed])
+        else:
+            env.reset_specific(pos, speed)
+            s_next, reward, _ , _ = env.step(action)
+            res['r'] = reward
+            res['s_next'] = s_next
+        
+        data.append(res)
     return data
 
 def data_stats(data):
@@ -194,18 +196,82 @@ def e(s):
     return feats
         
     
-def feat(s, a):
+def feats(s, a):
     N_a = 3
     e_s = e(s)
     N_f = np.size(e_s)
-    feats = np.zeros([N_f * N_a]) 
+    feats = np.zeros([N_f * N_a, 1]) 
     np.put(feats, range(a*N_f, (a+1)*N_f), e_s[:])
     return feats
-                    
-                
+     
+def next_a(next_s, theta):
+    max_a = 0
+    max_val = -np.inf
+    for a in [0, 1, 2]:
+        curr_val = theta.T.dot(feats(next_s, a))
+        if curr_val > max_val:
+            max_val = curr_val
+            max_a = a
+    return max_a
+               
+def train_lspi(data, gamma = 0.999):
+    #data = lspi_data_sample()
+    global pos_mu, pos_sigma, speed_mu, speed_sigma
+    pos_mu, pos_sigma, speed_mu, speed_sigma = data_stats(data)
+    proj_data = [ feats(d['s'], d['a']) for d in data]
+    rs = [d['r'] for d in data]
+    theta = np.zeros([np.size(proj_data[0]) , 1])
+    
+    d_est = (1 / np.size(data)) * sum([ r * d for d, r in zip(proj_data, rs) ] )
+    N = 100
+    eps = 0.001
+    for i in range(N):
+        proj_next = [feats( d['s_next'], next_a(d['s_next'], theta) ) for d in data]
+        C_est = (1 / np.size(data)) * sum( [ np.matmul(f_st_at, f_st_at.T - gamma*f_st1_at1.T   ) for f_st_at, f_st1_at1 in zip(proj_data, proj_next) ] )
+        theta_next = np.matmul( np.linalg.inv(C_est) , d_est )
+        
+        if max( theta_next - theta ) < eps:
+            return theta_next
+        else:
+            theta = theta_next
+            yield theta
+        
+    return theta
+    
+def test_lspi():
+    env = MountainCarWithResetEnv()
+    high = -0.4
+    low = -0.6
+    init_states = [( (high - low)*np.random.sample() + low, 0) for i in range(10)]
+    max_iter = 1000
+    total_success = 5 * [[]]
+    for i in range(5):
+        np.random.seed(seed = i)
+        data = lspi_data_sample()
+        theta_n = list(train_lspi(data))
+        for theta in theta_n:
+            success_theta = []
+            for init_s in init_states:
+                env.reset_specific(init_s)
+                env.render()
+                is_done = False
+                success_rate = 0
+                a = next_a(init_s, theta) # First step
+                for i in range(max_iter):
+                    next_s, r, is_done, _ = env.step(a)
+                    a = next_a(next_s, theta)
+                    if is_done:
+                        success_rate += 0.1
+                        break
+                success_theta.append(success_rate)
+        total_success[i] = success_theta
+    return total_success
+    
+            
+
             
     
-
+    
     
 # %% main
 if __name__ == '__main__':
