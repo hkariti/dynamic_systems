@@ -222,12 +222,18 @@ def train_lspi(data, gamma = 0.999):
     rs = [d['r'] for d in data]
     theta = np.zeros([np.size(proj_data[0]) , 1])
     
-    d_est = (1 / np.size(data)) * sum([ r * d for d, r in zip(proj_data, rs) ] )
+    #d_est = (1 / np.size(data)) * sum([ r * d for d, r in zip(proj_data, rs) ] )
+    d_est = 0
+    for d, r in zip(proj_data, rs):
+        d_est += (1 / np.size(data)) * r * d
     N = 100
     eps = 0.001
     for i in range(N):
         proj_next = [feats( d['s_next'], next_a(d['s_next'], theta) ) for d in data]
-        C_est = (1 / np.size(data)) * sum( [ np.matmul(f_st_at, f_st_at.T - gamma*f_st1_at1.T   ) for f_st_at, f_st1_at1 in zip(proj_data, proj_next) ] )
+        # C_est = (1 / np.size(data)) * sum( [ np.matmul(f_st_at, f_st_at.T - gamma*f_st1_at1.T   ) for f_st_at, f_st1_at1 in zip(proj_data, proj_next) ] )
+        C_est = np.zeros(np.matmul(proj_data[0], proj_data[0].T).shape) # Init zeros in correct shape
+        for f_st_at, f_st1_at1 in zip(proj_data, proj_next):
+            C_est += (1 / np.size(data)) * np.matmul( f_st_at, f_st_at.T - gamma*f_st1_at1.T )
         theta_next = np.matmul( np.linalg.inv(C_est) , d_est )
         
         if max( theta_next - theta ) < eps:
@@ -246,18 +252,22 @@ def test_lspi():
     max_iter = 1000
     total_success = 5 * [[]]
     for i in range(5):
+        print("Starting iteration i=", i)
         np.random.seed(seed = i)
         data = lspi_data_sample()
         theta_n = list(train_lspi(data))
         for theta in theta_n:
+            print("New theta")
             success_theta = []
             for init_s in init_states:
-                env.reset_specific(init_s)
+                print("New init state")
+                env.reset_specific(*init_s)
                 env.render()
                 is_done = False
                 success_rate = 0
                 a = next_a(init_s, theta) # First step
-                for i in range(max_iter):
+                for j in range(max_iter):
+                    print("Game iteration:", j)
                     next_s, r, is_done, _ = env.step(a)
                     a = next_a(next_s, theta)
                     if is_done:
