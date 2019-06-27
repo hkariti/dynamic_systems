@@ -11,7 +11,6 @@ import gym
 from gym import spaces
 from gym.utils import seeding
 
-
 class MountainCarWithResetEnv(gym.Env):
     metadata = {
         'render.modes': ['human', 'rgb_array'],
@@ -131,7 +130,79 @@ class MountainCarWithResetEnv(gym.Env):
             self.viewer.close()
             self.viewer = None
 
+# %% LSPI 
+def lspi_data_sample():
+    env = MountainCarWithResetEnv()
+    goal_pos = 0.5
+    min_pos = -1.2
+    max_pos = 0.6
+    min_speed = -0.07
+    max_speed = 0.07
+    N_speed = 100
+    N_pos = 1000
+    data = []
+    for pos in np.linspace(min_pos, max_pos, num=N_pos):
+        for speed in np.linspace(min_speed, max_speed, num=N_speed):
+            for action in [0, 1, 2]:
+                res = {'s' : np.array([pos, speed]), 'a' : action}
+                if pos >= goal_pos :
+                    res['r'] = 1
+                    res['s_next'] = np.array([pos, speed])
+                else:
+                    env.reset_specific(pos, speed)
+                    s_next, reward, _ , _ = env.step(action)
+                    res['r'] = reward
+                    res['s_next'] = s_next
+                
+                data.append(res)
+    return data
 
+def data_stats(data):
+    pos_l = []
+    speed_l = []
+    for d in data:
+        pos_l.append(d['s'][0])
+        speed_l.append(d['s'][1])
+    pos_mu = np.mean(pos_l)
+    pos_sigma = np.std(pos_l)
+    speed_mu = np.mean(speed_l)
+    speed_sigma = np.std(speed_l)
+    
+    return pos_mu, pos_sigma, speed_mu, speed_sigma
+
+def e(s):
+    # Implementation of RBF features
+
+    # pos, speed statistics should be global    
+    global pos_mu, pos_sigma, speed_mu, speed_sigma # Does this work? Hagai pls help
+    
+    n_pos = ( s[0] - pos_mu ) / pos_sigma
+    n_speed = ( s[1] - speed_mu ) / speed_sigma
+    n_s = np.array([n_pos, n_speed])
+    centers = [(-1.2, -0.07), (-1.2, 0.07), (0.5, -0.07), (0.5, 0.07), (0, 0)]
+    scales = [1, 1, 1, 1 ,1]
+    feats = np.array([])
+    for b, c in zip(scales, centers):
+        feats = np.append(feats, np.exp(-b * np.linalg.norm( n_s - np.array(c) ) ) )
+    feats = np.append(feats, 1)
+    
+    return feats
+        
+    
+def feat(s, a):
+    N_a = 3
+    e = e(s)
+    N_f = np.size(e)
+    feats = np.zeros([N_f * N_a]) 
+    np.put(feats, range(a*N_f, (a+1)*N_f), e[:])
+    return feats
+                    
+                
+            
+    
+
+    
+# %% main
 if __name__ == '__main__':
     env = MountainCarWithResetEnv()
     # # run no force
@@ -150,6 +221,9 @@ if __name__ == '__main__':
     #     _, r, is_done, _ = env.step(env.action_space.sample())  # take a random action
     #     env.render()
     #     print(r)
+    
+    
+    
     # set specific
     env.reset_specific(0.3, 0.0)
     env.render()
