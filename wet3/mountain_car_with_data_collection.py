@@ -142,6 +142,7 @@ def lspi_data_sample(N = 100000):
     min_speed = -0.07
     max_speed = 0.07
     data = []
+    rewards = np.zeros(N)
     for i in range(N):
     #for pos in np.linspace(min_pos, max_pos, num=N_pos):
         #for speed in np.linspace(min_speed, max_speed, num=N_speed):
@@ -151,16 +152,19 @@ def lspi_data_sample(N = 100000):
         action = np.random.choice(3)
         res = {'s' : np.array([pos, speed]), 'a' : action}
         if pos >= goal_pos :
-            res['r'] = 1
+            #res['r'] = 1
+            rewards[i] = 1
             res['s_next'] = np.array([pos, speed])
+            rewards[i] = 1
         else:
             env.reset_specific(pos, speed)
             s_next, reward, _ , _ = env.step(action)
-            res['r'] = reward
+            #res['r'] = reward
+            rewards[i] = reward
             res['s_next'] = s_next
         
         data.append(res)
-    return data
+    return data, rewards
 
 def data_stats(data):
     pos_l = []
@@ -200,7 +204,7 @@ def feats(s, a):
     N_a = 3
     e_s = e(s)
     N_f = np.size(e_s)
-    feats = np.zeros([N_f * N_a, 1]) 
+    feats = np.zeros([N_f * N_a]) 
     np.put(feats, range(a*N_f, (a+1)*N_f), e_s[:])
     return feats
      
@@ -214,26 +218,28 @@ def next_a(next_s, theta):
             max_a = a
     return max_a
                
-def train_lspi(data, gamma = 0.999):
+def train_lspi(data, rewards, gamma = 0.999):
     #data = lspi_data_sample()
     global pos_mu, pos_sigma, speed_mu, speed_sigma
     pos_mu, pos_sigma, speed_mu, speed_sigma = data_stats(data)
-    proj_data = [ feats(d['s'], d['a']) for d in data]
-    rs = [d['r'] for d in data]
-    theta = np.zeros([np.size(proj_data[0]) , 1])
+    proj_data = np.array([ feats(d['s'], d['a']) for d in data])
+    #rs = [d['r'] for d in data]
+    theta = np.zeros([np.size(proj_data[0]) ])
     
     #d_est = (1 / np.size(data)) * sum([ r * d for d, r in zip(proj_data, rs) ] )
     d_est = 0
-    for d, r in zip(proj_data, rs):
-        d_est += (1 / np.size(data)) * r * d
+    #for d, r in zip(proj_data, rs):
+    #    d_est += (1 / np.size(data)) * r * d
+    d_est = (1 / np.size(data)) * proj_data.T.dot(rewards)
     N = 100
     eps = 0.001
     for i in range(N):
-        proj_next = [feats( d['s_next'], next_a(d['s_next'], theta) ) for d in data]
+        proj_next = np.array([feats( d['s_next'], next_a(d['s_next'], theta) ) for d in data])
         # C_est = (1 / np.size(data)) * sum( [ np.matmul(f_st_at, f_st_at.T - gamma*f_st1_at1.T   ) for f_st_at, f_st1_at1 in zip(proj_data, proj_next) ] )
-        C_est = np.zeros(np.matmul(proj_data[0], proj_data[0].T).shape) # Init zeros in correct shape
-        for f_st_at, f_st1_at1 in zip(proj_data, proj_next):
-            C_est += (1 / np.size(data)) * np.matmul( f_st_at, f_st_at.T - gamma*f_st1_at1.T )
+        #C_est = np.zeros(np.matmul(proj_data[0], proj_data[0].T).shape) # Init zeros in correct shape
+        #for f_st_at, f_st1_at1 in zip(proj_data, proj_next):
+        #    C_est += (1 / np.size(data)) * np.matmul( f_st_at, f_st_at.T - gamma*f_st1_at1.T )
+        C_est = (1 / np.size(data)) * proj_data.T.dot(proj_data - gamma * proj_next)
         theta_next = np.matmul( np.linalg.inv(C_est) , d_est )
         
         if max( theta_next - theta ) < eps:
@@ -254,15 +260,15 @@ def test_lspi():
     for i in range(5):
         print("Starting iteration i=", i)
         np.random.seed(seed = i)
-        data = lspi_data_sample()
-        theta_n = list(train_lspi(data))
+        data, rewards = lspi_data_sample()
+        theta_n = list(train_lspi(data, rewards))
         for theta in theta_n:
             print("New theta")
             success_theta = []
             for init_s in init_states:
                 print("New init state")
                 env.reset_specific(*init_s)
-                env.render()
+                #env.render()
                 is_done = False
                 success_rate = 0
                 a = next_a(init_s, theta) # First step
