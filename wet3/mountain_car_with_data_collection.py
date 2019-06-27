@@ -180,9 +180,10 @@ def e(s):
     n_speed = ( s[1] - speed_mu ) / speed_sigma
     n_s = np.array([n_pos, n_speed])
     centers = [(-1.2, -0.07), (-1.2, 0.07), (0.5, -0.07), (0.5, 0.07), (0, 0)]
+    n_centers = [( (c[0] - pos_mu / pos_sigma), (c[1] - speed_mu / speed_sigma) ) for c in centers]
     scales = [1, 1, 1, 1 ,1]
     feats = np.array([])
-    for b, c in zip(scales, centers):
+    for b, c in zip(scales, n_centers):
         feats = np.append(feats, np.exp(-b * np.linalg.norm( n_s - np.array(c) ) ) )
     feats = np.append(feats, 1)
     
