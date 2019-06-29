@@ -5,7 +5,7 @@ from mountain_car_with_data_collection import MountainCarWithResetEnv
 
 import matplotlib.pyplot as plt
 # %% LSPI
-def lspi_data_sample(N=100000):
+def lspi_data_sample(N=3000):
     env = MountainCarWithResetEnv()
     goal_pos = 0.5
     min_pos = -1.2
@@ -115,7 +115,7 @@ def train_lspi(data, states, actions, rewards, next_states, gamma = 0.999):
     #    d_est += (1 / np.size(data)) * r * d
     d_est = (1 / np.shape(proj_data)[0]) * proj_data.T.dot(rewards)
     N = 100
-    eps = 0.001
+    eps = 0.00001
     for i in range(N):
         proj_next = feats( next_states, next_a(next_states, theta) )
         # C_est = (1 / np.size(data)) * sum( [ np.matmul(f_st_at, f_st_at.T - gamma*f_st1_at1.T   ) for f_st_at, f_st1_at1 in zip(proj_data, proj_next) ] )
@@ -132,40 +132,75 @@ def train_lspi(data, states, actions, rewards, next_states, gamma = 0.999):
             theta = theta_next
             yield theta
 
-def test_lspi(N=100000):
-    env = MountainCarWithResetEnv()
-    high = -0.4
-    low = -0.6
-    init_states = [( (high - low)*np.random.sample() + low, 0) for i in range(10)]
-    max_iter = 1000
-    total_success = 5 * [[]]
-    for i in range(5):
-        #print("Starting iteration i=", i)
-        np.random.seed(seed = i)
-        data, states, actions, rewards, next_states = lspi_data_sample(N)
-        theta_n = list(train_lspi(data, states, actions, rewards, next_states))
-        success_theta = []
-        for theta in theta_n:
-            #print("New theta")
-            success_rate = 0
-            for init_s in init_states:
-                #print("New init state")
-                env.reset_specific(*init_s)
-                #env.render()
-                is_done = False
-                a = next_a(np.array(init_s).reshape([1,2]), theta) # First step
-                for j in range(max_iter):
-                    #print("Game iteration:", j)
-                    next_s, r, is_done, _ = env.step(int(a))
-                    a = next_a(next_s.reshape([1,2]), theta)
-                    if is_done:
-                        success_rate += 1
-                        break
-            success_theta.append(success_rate/10)
-        total_success[i] = success_theta
-    max_len = max([len(total_success[i]) for i in range(len(total_success))])
+def test_lspi(N_list=[3000]):
+    results = []
+    fig, ax = plt.subplots()
+    #plt.rcParams.update({'font.size': 10})
+    for N in N_list:
+        N = int(N)
+        env = MountainCarWithResetEnv()
+        high = -0.4
+        low = -0.6
+        init_states = [( (high - low)*np.random.sample() + low, 0) for i in range(10)]
+        max_iter = 1000
+        total_success = 5 * [[]]
+        for i in range(5):
+            #print("Starting iteration i=", i)
+            np.random.seed(seed = i)
+            data, states, actions, rewards, next_states = lspi_data_sample(N)
+            theta_n = list(train_lspi(data, states, actions, rewards, next_states))
+            success_theta = []
+            for theta in theta_n:
+                #print("New theta")
+                success_rate = 0
+                for init_s in init_states:
+                    #print("New init state")
+                    env.reset_specific(*init_s)
+                    #env.render()
+                    is_done = False
+                    a = next_a(np.array(init_s).reshape([1,2]), theta) # First step
+                    for j in range(max_iter):
+                        #print("Game iteration:", j)
+                        next_s, r, is_done, _ = env.step(int(a))
+                        a = next_a(next_s.reshape([1,2]), theta)
+                        if is_done:
+                            success_rate += 1.0
+                            break
+                success_theta.append(success_rate/10.0)
+            total_success[i] = success_theta
+        max_len = max([len(total_success[i]) for i in range(len(total_success))])
+        for i in range(len(total_success)):
+            l = len(total_success[i])
+            if l < max_len:
+                for j in range(max_len - l):
+                    total_success[i].append(total_success[i][-1])
+        res = np.array(total_success)
+        res_mean = np.mean(res, axis = 0)
+        results.append(list(res_mean))
+        
+    max_len = max([len(results[i]) for i in range(len(results))]) 
+    for i in range(len(results)):
+        l = len(results[i])
+        if l < max_len:
+            for j in range(max_len - l):
+                results[i].append(results[i][-1])
+    for N, res_mean in zip(N_list, results):
+        it = list(range(1, len(res_mean) + 1))
+
+        ax.plot(it, res_mean, label = 'N = ' + str(int(N)))    
+    ax.grid(True)
+    if len(N_list) > 1:
+        plt.title('Average success rate per iteration for different amounts of samples')
+    else:
+        plt.title('Average success rate per iteration')
+    plt.xlabel('Iteration')
+    plt.ylabel('Success rate')
+    plt.legend(loc = 'lower left')
+    plt.ylim(-0.2, 1.2)
+    plt.show()
+
     
-    return total_success
+    return res_mean
 
 def visualize_lspi(states, theta):
     N = states.shape[0]
@@ -173,7 +208,7 @@ def visualize_lspi(states, theta):
     
     fig, ax = plt.subplots()
     fsize = 22
-    plt.rcParams.update({'font.size': fsize})
+    #plt.rcParams.update({'font.size': fsize})
     ac = [0, 1, 2]
     for a, color, label in zip(ac, ['tab:blue', 'tab:orange', 'tab:green'], ['LEFT', 'STAY', 'RIGHT']):
         xy = states[a == opt_a, :]
@@ -220,11 +255,11 @@ if __name__ == '__main__':
     
     # set specific
     N = 3000
-    
+    test_lspi([N])
+    test_lspi([N/10, N/2, N, 2*N, 10*N])
     data, states, actions, rewards, next_states = lspi_data_sample(N)
     theta_n = list(train_lspi(data, states, actions, rewards, next_states))
-    #env.reset_specific(0.3, 0.0)
-    #s = np.array([0.3, 0.0]).reshape([1,2])
+
     env.reset()
     s, _, _, _ = env.step(0)
     env.render()
@@ -237,4 +272,4 @@ if __name__ == '__main__':
         #print(r)
     env.close()
     
-    visualize_lspi(states, theta_n[-1])
+    #visualize_lspi(states, theta_n[-1])
