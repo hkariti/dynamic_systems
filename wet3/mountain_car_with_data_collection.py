@@ -3,6 +3,7 @@ http://incompleteideas.net/sutton/MountainCar/MountainCar1.cp
 permalink: https://perma.cc/6Z2N-PFWC
 """
 
+from __future__ import division
 import math
 
 import numpy as np
@@ -257,14 +258,13 @@ def train_lspi(data, states, actions, rewards, next_states, gamma = 0.999):
         theta_next = np.matmul( np.linalg.inv(C_est) , d_est ).reshape([np.size(theta), 1])
         
         if max( theta_next - theta ) < eps:
-            return theta_next
+            yield theta_next
+            return
         else:
             theta = theta_next
             yield theta
-        
-    return theta
     
-def test_lspi():
+def test_lspi(N = 100000):
     env = MountainCarWithResetEnv()
     high = -0.4
     low = -0.6
@@ -274,7 +274,7 @@ def test_lspi():
     for i in range(5):
         print("Starting iteration i=", i)
         np.random.seed(seed = i)
-        data, states, actions, rewards, next_states = lspi_data_sample()
+        data, states, actions, rewards, next_states = lspi_data_sample(N)
         theta_n = list(train_lspi(data, states, actions, rewards, next_states))
         success_theta = []
         for theta in theta_n:
@@ -296,13 +296,7 @@ def test_lspi():
             success_theta.append(success_rate/10)
         total_success[i] = success_theta
     return total_success
-    
-            
 
-            
-    
-    
-    
 # %% main
 if __name__ == '__main__':
     env = MountainCarWithResetEnv()
