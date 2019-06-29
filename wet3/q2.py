@@ -6,7 +6,7 @@ from mountain_car_with_data_collection import MountainCarWithResetEnv
 class QLearningAgent:
     def __init__(self):
         self.game = MountainCarWithResetEnv()
-        self.theta = np.zeros((1, 18))
+        self.theta = np.random.normal(size=18).reshape((1, 18))
 
         # Constants used for data standardization
         self.pos_mu = (self.game.min_position + self.game.max_position)/2
@@ -72,14 +72,15 @@ class QLearningAgent:
 
         return feats
 
-    def gather_data(self, epsilon, iterations=100):
+    def gather_data(self, epsilon, iterations=1000):
         states = np.zeros((iterations, 2))
         actions = np.zeros((iterations, 1))
         next_states = np.zeros((iterations, 2))
         rewards = np.zeros((iterations, 1))
         data = (states, actions, next_states, rewards)
 
-        state = self.game.state.reshape((1, 2))
+        state = np.array(self.game.state).reshape((1, 2))
+        is_done = False
         i = None
         for i in range(iterations):
             if np.random.uniform() > epsilon:
@@ -93,8 +94,8 @@ class QLearningAgent:
             rewards[i, :] = reward
             if is_done:
                 break
-            state = next_state.reshape((1, 2))
-        return data, i
+            state = np.array(next_state).reshape((1, 2))
+        return data, is_done, i
 
     def train_step(self, alpha, data, batch_size=10, gamma=0.99):
         data_length = data[0].shape[0]
@@ -107,6 +108,35 @@ class QLearningAgent:
 
         update_step = 0
         for i in range(batch_size):
-            coeff = rewards[i] + gamma * self.q_max(next_states[i]) - self.q(states[i], actions[i])
-            update_step += self.extract_features(states[i], actions[i]) * coeff
+            coeff = rewards[i] + gamma * self.q_max(next_states[i].reshape((1,2))) - self.q(states[i].reshape((1, 2)), actions[i])
+            update_step += self.extract_features(states[i].reshape((1,2)), actions[i]) * coeff
         self.theta += alpha * update_step
+
+    def train(self, epsilon=0.1, init_state=None, max_iterations=100):
+        self.reset(init_state)
+
+        for i in range(max_iterations):
+            print("Training cycle", i)
+            data, is_done, max_ind = self.gather_data(epsilon)
+            if not is_done:
+                print("Didn't finish, trying again")
+                continue
+
+            data = (data[0][:max_ind + 1, :],
+                    data[1][:max_ind + 1, :],
+                    data[2][:max_ind + 1, :],
+                    data[3][:max_ind + 1, :])
+            self.train_step(0.1, data)
+
+    def play(self):
+        self.reset()
+
+        while True:
+            state = np.array(self.game.state).reshape((1, 2))
+            action = self.next_a(state)[0]
+            next_state, reward, is_done, _ = self.game.step(action)
+            self.game.render()
+            state = np.array(next_state).reshape((1,2))
+            if is_done:
+                return
+
