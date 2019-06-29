@@ -1,4 +1,4 @@
-from __future__ import division
+from __future__ import division, print_function
 import numpy as np
 
 from mountain_car_with_data_collection import MountainCarWithResetEnv
@@ -168,6 +168,6 @@ if __name__ == '__main__':
     import sys
     if len(sys.argv) > 1:
         N = int(sys.argv[1])
-        test_lspi(N)
+        print(test_lspi(N))
     else:
-        test_lspi()
+        print(test_lspi())
