@@ -154,12 +154,10 @@ class QLearningAgent:
                     data[1][:max_ind + 1, :],
                     data[2][:max_ind + 1, :],
                     data[3][:max_ind + 1, :])
-            new_theta = self.train_step(init_alpha, data)
-            new_theta = self.train_step(init_alpha, data)
-            new_theta = self.train_step(init_alpha, data)
-            new_theta = self.train_step(init_alpha, data)
-            theta_diff = new_theta - self.theta
-            self.theta = new_theta
+            for i in range(4):
+                new_theta = self.train_step(init_alpha, data)
+                theta_diff = new_theta - self.theta
+                self.theta = new_theta
 
             diff_max = np.max(np.abs(theta_diff))
             print("theta_new - theta (max) =", diff_max)
