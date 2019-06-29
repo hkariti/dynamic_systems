@@ -30,6 +30,21 @@ class QLearningAgent:
 
         return np.argmax(Q_est, axis=1)
 
+    def q_max(self, state):
+        N = np.shape(state)[0]
+
+        Q_est = np.zeros([N, 3])
+        Q_est[:, 0] = self.theta.dot(self.extract_features(state, np.zeros(N)).T)
+        Q_est[:, 1] = self.theta.dot(self.extract_features(state, np.ones(N)).T)
+        Q_est[:, 2] = self.theta.dot(self.extract_features(state, 2*np.ones(N)).T)
+
+        return np.max(Q_est, axis=1)
+
+    def q(self, state, action):
+        Q_est = self.theta.dot(self.extract_features(state, action * np.ones(1)).T)
+
+        return Q_est
+
     def extract_features(self, s, actions):
         N_a = 3
         e_s = self.rbf(s)
@@ -80,3 +95,18 @@ class QLearningAgent:
                 break
             state = next_state.reshape((1, 2))
         return data, i
+
+    def train_step(self, alpha, data, batch_size=10, gamma=0.99):
+        data_length = data[0].shape[0]
+        batch_indices = np.random.randint(0, data_length, batch_size)
+
+        states = data[0][batch_indices]
+        actions = data[1][batch_indices]
+        next_states = data[2][batch_indices]
+        rewards = data[3][batch_indices]
+
+        update_step = 0
+        for i in range(batch_size):
+            coeff = rewards[i] + gamma * self.q_max(next_states[i]) - self.q(states[i], actions[i])
+            update_step += self.extract_features(states[i], actions[i]) * coeff
+        self.theta += alpha * update_step
