@@ -3,6 +3,7 @@ import numpy as np
 
 from mountain_car_with_data_collection import MountainCarWithResetEnv
 
+import matplotlib.pyplot as plt
 # %% LSPI
 def lspi_data_sample(N=100000):
     env = MountainCarWithResetEnv()
@@ -60,7 +61,7 @@ def e(s):
     n_s[:,1] = ( s[:,1] - speed_mu ) / speed_sigma
     centers = [(-1.2, -0.07), (-1.2, 0.07), (0.5, -0.07), (0.5, 0.07), (0, 0)]
     n_centers = np.array([( (c[0] - pos_mu / pos_sigma), (c[1] - speed_mu / speed_sigma) ) for c in centers])
-    scales = [1, 1, 1, 1 ,1]
+    scales = [1, 1, 1, 1, 1]
     feats = np.ones([n_s.shape[0], np.size(scales) + 1])
     for i, n_c in enumerate(n_centers):
         feats[:,i] = np.exp(-scales[i] * np.linalg.norm(n_s - n_c, axis = 1))
@@ -139,22 +140,22 @@ def test_lspi(N=100000):
     max_iter = 1000
     total_success = 5 * [[]]
     for i in range(5):
-        print("Starting iteration i=", i)
+        #print("Starting iteration i=", i)
         np.random.seed(seed = i)
         data, states, actions, rewards, next_states = lspi_data_sample(N)
         theta_n = list(train_lspi(data, states, actions, rewards, next_states))
         success_theta = []
         for theta in theta_n:
-            print("New theta")
+            #print("New theta")
             success_rate = 0
             for init_s in init_states:
-                print("New init state")
+                #print("New init state")
                 env.reset_specific(*init_s)
                 #env.render()
                 is_done = False
                 a = next_a(np.array(init_s).reshape([1,2]), theta) # First step
                 for j in range(max_iter):
-                    print("Game iteration:", j)
+                    #print("Game iteration:", j)
                     next_s, r, is_done, _ = env.step(int(a))
                     a = next_a(next_s.reshape([1,2]), theta)
                     if is_done:
@@ -162,12 +163,78 @@ def test_lspi(N=100000):
                         break
             success_theta.append(success_rate/10)
         total_success[i] = success_theta
+    max_len = max([len(total_success[i]) for i in range(len(total_success))])
+    
     return total_success
 
+def visualize_lspi(states, theta):
+    N = states.shape[0]
+    opt_a = next_a(states, theta)
+    
+    fig, ax = plt.subplots()
+    fsize = 22
+    plt.rcParams.update({'font.size': fsize})
+    ac = [0, 1, 2]
+    for a, color, label in zip(ac, ['tab:blue', 'tab:orange', 'tab:green'], ['LEFT', 'STAY', 'RIGHT']):
+        xy = states[a == opt_a, :]
+        ax.scatter(xy[:, 0], xy[:, 1], c=color, label=label, edgecolors='none')
+        
+    ax.legend()
+    ax.grid(True)
+    plt.title('Sample size - ' +str(N))
+    plt.xlabel('Position',fontsize=fsize)
+    plt.ylabel('Velocity',fontsize=fsize)
+
+    plt.show()
+
+
+
+#if __name__ == '__main__':
+#    import sys
+#    if len(sys.argv) > 1:
+#        N = int(sys.argv[1])
+#        print(test_lspi(N))
+#    else:
+#        print(test_lspi())
+ # %%  
 if __name__ == '__main__':
-    import sys
-    if len(sys.argv) > 1:
-        N = int(sys.argv[1])
-        print(test_lspi(N))
-    else:
-        print(test_lspi())
+    env = MountainCarWithResetEnv()
+    # # run no force
+    # env.reset()
+    # env.render()
+    # is_done = False
+    # while not is_done:
+    #     _, r, is_done, _ = env.step(1)
+    #     env.render()
+    #     print(r)
+    # # run random forces
+    # env.reset()
+    # env.render()
+    # is_done = False
+    # while not is_done:
+    #     _, r, is_done, _ = env.step(env.action_space.sample())  # take a random action
+    #     env.render()
+    #     print(r)
+    
+    
+    
+    # set specific
+    N = 3000
+    
+    data, states, actions, rewards, next_states = lspi_data_sample(N)
+    theta_n = list(train_lspi(data, states, actions, rewards, next_states))
+    #env.reset_specific(0.3, 0.0)
+    #s = np.array([0.3, 0.0]).reshape([1,2])
+    env.reset()
+    s, _, _, _ = env.step(0)
+    env.render()
+    is_done = False
+    i = 0
+    while (not is_done) and (i < 500):
+        s, r, is_done, _ = env.step(int(next_a(s.reshape([1, 2]), theta_n[-1])))  # Use optimal policy
+        env.render()
+        i = i+1
+        #print(r)
+    env.close()
+    
+    visualize_lspi(states, theta_n[-1])
