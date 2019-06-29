@@ -58,10 +58,10 @@ class QLearningAgent:
         return feats
 
     def gather_data(self, epsilon, iterations=100):
-        states = np.empty((iterations, 2))
-        actions = np.empty((iterations, 1))
-        next_states = np.empty((iterations, 2))
-        rewards = np.empty((iterations, 1))
+        states = np.zeros((iterations, 2))
+        actions = np.zeros((iterations, 1))
+        next_states = np.zeros((iterations, 2))
+        rewards = np.zeros((iterations, 1))
         data = (states, actions, next_states, rewards)
 
         state = self.game.state.reshape((1, 2))
