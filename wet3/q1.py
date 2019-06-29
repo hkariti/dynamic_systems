@@ -256,19 +256,19 @@ if __name__ == '__main__':
     N = 3000
     test_lspi([N])
     test_lspi([N/10, N/2, N, 2*N, 10*N])
-#    data, states, actions, rewards, next_states = lspi_data_sample(N)
-#    theta_n = list(train_lspi(data, states, actions, rewards, next_states))
-#
-#    env.reset()
-#    s, _, _, _ = env.step(0)
-#    env.render()
-#    is_done = False
-#    i = 0
-#    while (not is_done) and (i < 500):
-#        s, r, is_done, _ = env.step(int(next_a(s.reshape([1, 2]), theta_n[-1])))  # Use optimal policy
-#        env.render()
-#        i = i+1
-#        #print(r)
-#    env.close()
+    data, states, actions, rewards, next_states = lspi_data_sample(N)
+    theta_n = list(train_lspi(data, states, actions, rewards, next_states))
+
+    env.reset()
+    s, _, _, _ = env.step(0)
+    env.render()
+    is_done = False
+    i = 0
+    while (not is_done) and (i < 500):
+        s, r, is_done, _ = env.step(int(next_a(s.reshape([1, 2]), theta_n[-1])))  # Use optimal policy
+        env.render()
+        i = i+1
+        #print(r)
+    env.close()
     
     #visualize_lspi(states, theta_n[-1])
