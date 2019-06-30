@@ -69,8 +69,8 @@ class QLearningAgent:
             for j in -0.07, -0.03, 0, 0.03, 0.07:
                 centers.append((i, j))
         n_centers = np.array([(
-            (c[0] - self.pos_mu/self.pos_sigma),
-            (c[1] - self.speed_mu/self.speed_sigma)) for c in centers])
+            (c[0] - self.pos_mu)/self.pos_sigma,
+            (c[1] - self.speed_mu)/self.speed_sigma) for c in centers])
         scales = [1 for c in centers]
 
         feats = np.ones([n_s.shape[0], np.size(scales) + 1])
