@@ -12,7 +12,7 @@ class QLearningAgent:
 
         # Constants used for data standardization
         self.pos_mu = (self.game.min_position + self.game.max_position)/2
-        self.pos_sigma = (self.game.max_position - self.game.min_position)/12
+        self.pos_sigma = (self.game.max_position - self.game.min_position)/np.sqrt(12)
         self.speed_mu = 0
         self.speed_sigma = 2*self.game.max_speed/np.sqrt(12)
 
@@ -89,7 +89,6 @@ class QLearningAgent:
         ac = [0, 1, 2]
         for a, color, label in zip(ac, ['tab:blue', 'tab:orange', 'tab:green'], ['LEFT', 'STAY', 'RIGHT']):
             xy = states[a == opt_a, :]
-            print(xy)
             ax.scatter(xy[:, 0], xy[:, 1], c=color, label=label, edgecolors='none')
 
         ax.legend()
@@ -111,7 +110,6 @@ class QLearningAgent:
                 action = np.random.choice(3)
             print(action)
             next_state, reward, is_done, _ = self.game.step(action)
-            reward = (-1)**(1+is_done)
             coeff = reward + gamma * self.q_max(next_state.reshape((1, 2))) - self.q(state.reshape((1, 2)), np.array([action]))
             update_step = self.extract_features(state.reshape((1, 2)), np.array([action])) * coeff
             old_theta = self.theta.copy()
@@ -131,7 +129,7 @@ class QLearningAgent:
         rewards = np.zeros((iterations_per_game*games, 1))
         data = (states, actions, next_states, rewards)
 
-        was_done = False
+        was_done = 0
         data_index = 0
         for g in range(games):
             state = self.reset_random()
@@ -144,7 +142,7 @@ class QLearningAgent:
                     rand = True
                     action = np.random.choice(3)
                 next_state, reward, is_done, _ = self.game.step(action)
-                was_done |= is_done
+                was_done += np.sum(reward)
                 states[data_index, :] = state
                 actions[data_index, :] = action
                 next_states[data_index, :] = next_state
@@ -180,11 +178,11 @@ class QLearningAgent:
         #data = (states, actions.reshape((10000, 1)), next_states, rewards)
         alpha = init_alpha
         epsilon = init_epsilon
+        import q1
+        ret = q1.lspi_data_sample(10000)
+        vis_samples = ret[1]
         for i in range(max_iterations):
             data, is_done, max_ind = self.gather_data(epsilon)
-
-            if not is_done:
-                print("Didn't finish, num", i)
 
             data = (data[0][:max_ind, :],
                     data[1][:max_ind, :],
@@ -196,9 +194,11 @@ class QLearningAgent:
             theta_diff = self.theta - old_theta
 
             diff_max = np.max(np.abs(theta_diff))
-            print("Iter", i, "alpha", alpha, "ep", epsilon, "theta_new - theta (max) =", diff_max)
+            theta_max = np.max(np.abs(self.theta))
+            print("Iter", i, "max_ind", max_ind, "rewards", is_done, "alpha", alpha, "ep", epsilon, "theta_new - theta (max) =", diff_max, "theta_max", theta_max)
             epsilon = 0.9 * epsilon
             alpha = 0.9 * alpha
+            self.visualize_lspi(vis_samples)
 
             #if diff_max <= 0.001:
             #    print("Converged!")
