@@ -122,7 +122,7 @@ class QLearningAgent:
                 return 1
         return 0
 
-    def gather_data(self, epsilon, iterations_per_game=200, games=5):
+    def gather_data(self, epsilon, iterations_per_game=250, games=7):
         states = np.zeros((iterations_per_game*games, 2))
         actions = np.zeros((iterations_per_game*games, 1))
         next_states = np.zeros((iterations_per_game*games, 2))
@@ -154,14 +154,20 @@ class QLearningAgent:
                     break
         return data, was_done, data_index
 
-    def train_step(self, alpha, data, batch_size=100, gamma=0.99):
+    def train_step(self, alpha, data, batch_size=100, gamma=0.999):
         data_length = data[0].shape[0]
-        batch_indices = np.random.randint(0, data_length, batch_size)
+        reward_indices = (data[3] == 1).reshape(data_length)
+        reward_count = reward_indices.sum()
+        batch_indices = np.random.randint(0, data_length, batch_size - reward_count)
+        batch_marker = np.zeros(data_length, dtype=bool)
+        batch_marker[batch_indices] = True
+        batch_marker[reward_indices] = True
+        batch_size = batch_marker.sum()
 
-        states = data[0][batch_indices]
-        actions = data[1][batch_indices]
-        next_states = data[2][batch_indices]
-        rewards = data[3][batch_indices]
+        states = data[0][batch_marker]
+        actions = data[1][batch_marker]
+        next_states = data[2][batch_marker]
+        rewards = data[3][batch_marker]
 
         update_step = 0
         for i in range(batch_size):
@@ -189,15 +195,15 @@ class QLearningAgent:
                     data[2][:max_ind, :],
                     data[3][:max_ind, :])
             old_theta = self.theta
-            for j in range(10):
+            for j in range(20):
                 self.theta = self.train_step(alpha, data)
             theta_diff = self.theta - old_theta
 
             diff_max = np.max(np.abs(theta_diff))
             theta_max = np.max(np.abs(self.theta))
             print("Iter", i, "max_ind", max_ind, "rewards", is_done, "alpha", alpha, "ep", epsilon, "theta_new - theta (max) =", diff_max, "theta_max", theta_max)
-            epsilon = 0.9 * epsilon
-            alpha = 0.9 * alpha
+            epsilon = epsilon
+            alpha = 0.8 * alpha
             self.visualize_lspi(vis_samples)
 
             #if diff_max <= 0.001:
