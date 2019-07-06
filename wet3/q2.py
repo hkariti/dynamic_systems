@@ -175,8 +175,10 @@ class QLearningAgent:
         update_step = 0
         for i in range(batch_size):
             coeff = rewards[i] + gamma * self.q_max(next_states[i].reshape((1, 2))) - self.q(states[i].reshape((1, 2)), actions[i])
-            update_step += self.extract_features(states[i].reshape((1, 2)), actions[i]) * coeff
-        return self.theta + alpha * update_step / batch_size
+            step = self.extract_features(states[i].reshape((1, 2)), actions[i]) * coeff
+            update_step += step
+        max_element = np.max(np.abs(update_step))
+        return self.theta + alpha * update_step / max_element
 
     def reset_random(self):
         init_state = (np.random.uniform(-1.2, 0.6), np.random.uniform(-0.07, 0.07))
