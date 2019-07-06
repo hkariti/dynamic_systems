@@ -30,7 +30,10 @@ class QLearningAgent:
         Q_est[:, 1] = self.theta.dot(self.extract_features(state, np.ones(N)).T)
         Q_est[:, 2] = self.theta.dot(self.extract_features(state, 2*np.ones(N)).T)
 
-        return np.argmax(Q_est, axis=1)
+        action = np.argmax(Q_est, axis=1)
+        action = -(action - 1) + 1
+
+        return action
 
     def q_max(self, state):
         N = np.shape(state)[0]
