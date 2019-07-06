@@ -67,8 +67,6 @@ class QLearningAgent:
         n_s = np.zeros(s.shape)
         n_s[:, 0] = (s[:, 0] - self.pos_mu) / self.pos_sigma
         n_s[:, 1] = (s[:, 1] - self.speed_mu) / self.speed_sigma
-        #centers = [(-1.2, -0.07), (-1.2, 0.07), (0.5, -0.07), (0.5, 0.07), (0, 0)]
-        centers = [(-1.2, -0.07), (-1.2, 0.07), (0.5, -0.07), (0.5, 0.07), (0, 0)]
         centers = []
         for i in -1.2, -0.6, 0, 0.6, 1.2:
             for j in -0.07, -0.03, 0, 0.03, 0.07:
@@ -127,7 +125,7 @@ class QLearningAgent:
                 return 1
         return 0
 
-    def gather_data(self, epsilon, iterations_per_game=1000, games=20):
+    def gather_data(self, epsilon, iterations_per_game=1000, games=5):
         states = np.zeros((iterations_per_game*games, 2))
         actions = np.zeros((iterations_per_game*games, 1))
         next_states = np.zeros((iterations_per_game*games, 2))
