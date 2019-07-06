@@ -197,6 +197,7 @@ class QLearningAgent:
             #        data[2][:max_ind, :],
             #        data[3][:max_ind, :])
             data = lspi_data
+            max_ind = 1
             is_done = lspi_data[3].sum()
             old_theta = self.theta
             for j in range(20):
@@ -208,7 +209,7 @@ class QLearningAgent:
             print("Iter", i, "max_ind", max_ind, "rewards", is_done, "alpha", alpha, "ep", epsilon, "theta_new - theta (max) =", diff_max, "theta_max", theta_max)
             epsilon = epsilon
             alpha = 0.8 * alpha
-            self.visualize_lspi(vis_samples)
+            #self.visualize_lspi(vis_samples)
 
             #if diff_max <= 0.001:
             #    print("Converged!")
