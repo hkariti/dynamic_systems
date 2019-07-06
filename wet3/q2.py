@@ -122,7 +122,7 @@ class QLearningAgent:
                 return 1
         return 0
 
-    def gather_data(self, epsilon, iterations_per_game=250, games=7):
+    def gather_data(self, epsilon, iterations_per_game=1000, games=20):
         states = np.zeros((iterations_per_game*games, 2))
         actions = np.zeros((iterations_per_game*games, 1))
         next_states = np.zeros((iterations_per_game*games, 2))
@@ -154,11 +154,10 @@ class QLearningAgent:
                     break
         return data, was_done, data_index
 
-    def train_step(self, alpha, data, batch_size=100, gamma=0.999):
+    def train_step(self, alpha, data, batch_size=500, gamma=0.999):
         data_length = data[0].shape[0]
         reward_indices = (data[3] == 1).reshape(data_length)
-        #reward_count = reward_indices.sum()
-        reward_count = 0
+        reward_count = reward_indices.sum()
         batch_indices = np.random.randint(0, data_length, batch_size - reward_count)
         batch_marker = np.zeros(data_length, dtype=bool)
         batch_marker[batch_indices] = True
@@ -173,7 +172,7 @@ class QLearningAgent:
         update_step = 0
         for i in range(batch_size):
             coeff = rewards[i] + gamma * self.q_max(next_states[i].reshape((1, 2))) - self.q(states[i].reshape((1, 2)), actions[i])
-            update_step += self.extract_features(states[i].reshape((1, 2)), actions[i]*np.ones(1)) * coeff
+            update_step += self.extract_features(states[i].reshape((1, 2)), actions[i]) * coeff
         return self.theta + alpha * update_step / batch_size
 
     def reset_random(self):
@@ -190,15 +189,15 @@ class QLearningAgent:
         lspi_data = (ret[1], ret[2], ret[4], ret[3])
         vis_samples = ret[1]
         for i in range(max_iterations):
-            #data, is_done, max_ind = self.gather_data(epsilon)
+            data, is_done, max_ind = self.gather_data(epsilon)
 
-            #data = (data[0][:max_ind, :],
-            #        data[1][:max_ind, :],
-            #        data[2][:max_ind, :],
-            #        data[3][:max_ind, :])
-            data = lspi_data
-            max_ind = 1
-            is_done = lspi_data[3].sum()
+            data = (data[0][:max_ind, :],
+                    data[1][:max_ind, :],
+                    data[2][:max_ind, :],
+                    data[3][:max_ind, :])
+            #data = lspi_data
+            #max_ind = 1
+            #is_done = lspi_data[3].sum()
             old_theta = self.theta
             for j in range(20):
                 self.theta = self.train_step(alpha, data)
@@ -207,9 +206,9 @@ class QLearningAgent:
             diff_max = np.max(np.abs(theta_diff))
             theta_max = np.max(np.abs(self.theta))
             print("Iter", i, "max_ind", max_ind, "rewards", is_done, "alpha", alpha, "ep", epsilon, "theta_new - theta (max) =", diff_max, "theta_max", theta_max)
-            epsilon = epsilon
+            epsilon = 0.9 * epsilon
             alpha = 0.8 * alpha
-            #self.visualize_lspi(vis_samples)
+            self.visualize_lspi(vis_samples)
 
             #if diff_max <= 0.001:
             #    print("Converged!")
