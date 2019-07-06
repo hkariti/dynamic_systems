@@ -3,6 +3,7 @@ import numpy as np
 from matplotlib import pyplot as plt
 
 from mountain_car_with_data_collection import MountainCarWithResetEnv
+from q1 import lspi_data_sample
 
 class QLearningAgent:
     def __init__(self):
@@ -15,6 +16,7 @@ class QLearningAgent:
         self.pos_sigma = (self.game.max_position - self.game.min_position)/np.sqrt(12)
         self.speed_mu = 0
         self.speed_sigma = 2*self.game.max_speed/np.sqrt(12)
+        self.vis_samples = None
 
     def reset(self, state=None):
         if state:
@@ -82,16 +84,20 @@ class QLearningAgent:
 
         return feats
 
-    def visualize_lspi(self, states):
-        N = states.shape[0]
-        opt_a = self.next_a(states)
+    def visualize(self):
+        if self.vis_samples is None:
+            ret = lspi_data_sample(10000)
+            self.vis_samples = ret[1]
+
+        N = self.vis_samples.shape[0]
+        opt_a = self.next_a(self.vis_samples)
 
         fsize = 22
         plt.rcParams.update({'font.size': fsize})
         plt.clf()
         ac = [0, 1, 2]
         for a, color, label in zip(ac, ['tab:blue', 'tab:orange', 'tab:green'], ['LEFT', 'STAY', 'RIGHT']):
-            xy = states[a == opt_a, :]
+            xy = self.vis_samples[a == opt_a, :]
             plt.scatter(xy[:, 0], xy[:, 1], c=color, label=label, edgecolors='none')
 
         plt.legend()
@@ -132,7 +138,7 @@ class QLearningAgent:
         rewards = np.zeros((iterations_per_game*games, 1))
         data = (states, actions, next_states, rewards)
 
-        was_done = 0
+        success_count = 0
         data_index = 0
         for g in range(games):
             state = self.reset()
@@ -145,7 +151,7 @@ class QLearningAgent:
                     rand = True
                     action = np.random.choice(3)
                 next_state, reward, is_done, _ = self.game.step(action)
-                was_done += np.sum(reward)
+                success_count += np.sum(reward)
                 states[data_index, :] = state
                 actions[data_index, :] = action
                 next_states[data_index, :] = next_state
@@ -155,7 +161,8 @@ class QLearningAgent:
                 state = np.array(next_state).reshape((1, 2))
                 if is_done:
                     break
-        return data, was_done, data_index
+        success_rate = success_count / games
+        return data, success_rate, data_index
 
     def train_step(self, alpha, data, batch_size=100, gamma=0.999):
         data_length = data[0].shape[0]
@@ -184,25 +191,20 @@ class QLearningAgent:
         init_state = (np.random.uniform(-1.2, 0.6), np.random.uniform(-0.07, 0.07))
         return self.reset(init_state)
 
-    def train(self, init_state=None, init_epsilon=1, init_alpha=1, max_iterations=100):
+    def train(self, init_state=None, init_epsilon=1, init_alpha=1, max_iterations=30, visualise=False):
         #_, states, actions, rewards, next_states = q1.lspi_data_sample(10000)
         #data = (states, actions.reshape((10000, 1)), next_states, rewards)
         alpha = init_alpha
         epsilon = init_epsilon
-        import q1
-        ret = q1.lspi_data_sample(10000)
-        lspi_data = (ret[1], ret[2], ret[4], ret[3])
-        vis_samples = ret[1]
+        success_rates = np.empty(max_iterations)
         for i in range(max_iterations):
-            data, is_done, max_ind = self.gather_data(epsilon)
+            data, success_rate, max_ind = self.gather_data(epsilon)
+            success_rates[i] = success_rate
 
             data = (data[0][:max_ind, :],
                     data[1][:max_ind, :],
                     data[2][:max_ind, :],
                     data[3][:max_ind, :])
-            #data = lspi_data
-            #max_ind = 1
-            #is_done = lspi_data[3].sum()
             old_theta = self.theta
             for j in range(20):
                 self.theta = self.train_step(alpha, data)
@@ -210,14 +212,12 @@ class QLearningAgent:
 
             diff_max = np.max(np.abs(theta_diff))
             theta_max = np.max(np.abs(self.theta))
-            print("Iter", i, "max_ind", max_ind, "rewards", is_done, "alpha", alpha, "ep", epsilon, "theta_new - theta (max) =", diff_max, "theta_max", theta_max)
+            print("Iter", i, "game_iters", max_ind, "succ_rate", success_rate, "alpha", alpha, "ep", epsilon, "theta_new - theta (max) =", diff_max, "theta_max", theta_max)
             epsilon = 0.9 * epsilon
             alpha = 0.8 * alpha
-            self.visualize_lspi(vis_samples)
-
-            #if diff_max <= 0.001:
-            #    print("Converged!")
-            #    return
+            if visualise:
+                self.visualize()
+        return success_rates
 
     def play(self):
         state = self.reset().reshape((1,2))
