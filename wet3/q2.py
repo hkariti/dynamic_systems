@@ -86,21 +86,21 @@ class QLearningAgent:
         N = states.shape[0]
         opt_a = self.next_a(states)
 
-        fig, ax = plt.subplots()
         fsize = 22
         plt.rcParams.update({'font.size': fsize})
+        plt.clf()
         ac = [0, 1, 2]
         for a, color, label in zip(ac, ['tab:blue', 'tab:orange', 'tab:green'], ['LEFT', 'STAY', 'RIGHT']):
             xy = states[a == opt_a, :]
-            ax.scatter(xy[:, 0], xy[:, 1], c=color, label=label, edgecolors='none')
+            plt.scatter(xy[:, 0], xy[:, 1], c=color, label=label, edgecolors='none')
 
-        ax.legend()
-        ax.grid(True)
+        plt.legend()
+        plt.grid(True)
         plt.title('Sample size - ' +str(N))
         plt.xlabel('Position',fontsize=fsize)
         plt.ylabel('Velocity',fontsize=fsize)
 
-        plt.show()
+        plt.pause(0.1)
 
     def train_online(self, epsilon=0.5, alpha=0.1, gamma=0.999, iterations=500):
         state = self.reset()
@@ -157,7 +157,7 @@ class QLearningAgent:
                     break
         return data, was_done, data_index
 
-    def train_step(self, alpha, data, batch_size=500, gamma=0.999):
+    def train_step(self, alpha, data, batch_size=100, gamma=0.999):
         data_length = data[0].shape[0]
         reward_indices = (data[3] == 1).reshape(data_length)
         reward_count = reward_indices.sum()
