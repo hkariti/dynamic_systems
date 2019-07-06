@@ -157,7 +157,8 @@ class QLearningAgent:
     def train_step(self, alpha, data, batch_size=100, gamma=0.999):
         data_length = data[0].shape[0]
         reward_indices = (data[3] == 1).reshape(data_length)
-        reward_count = reward_indices.sum()
+        #reward_count = reward_indices.sum()
+        reward_count = 0
         batch_indices = np.random.randint(0, data_length, batch_size - reward_count)
         batch_marker = np.zeros(data_length, dtype=bool)
         batch_marker[batch_indices] = True
@@ -172,7 +173,7 @@ class QLearningAgent:
         update_step = 0
         for i in range(batch_size):
             coeff = rewards[i] + gamma * self.q_max(next_states[i].reshape((1, 2))) - self.q(states[i].reshape((1, 2)), actions[i])
-            update_step += self.extract_features(states[i].reshape((1, 2)), actions[i]) * coeff
+            update_step += self.extract_features(states[i].reshape((1, 2)), actions[i]*np.ones(1)) * coeff
         return self.theta + alpha * update_step / batch_size
 
     def reset_random(self):
@@ -186,14 +187,17 @@ class QLearningAgent:
         epsilon = init_epsilon
         import q1
         ret = q1.lspi_data_sample(10000)
+        lspi_data = (ret[1], ret[2], ret[4], ret[3])
         vis_samples = ret[1]
         for i in range(max_iterations):
-            data, is_done, max_ind = self.gather_data(epsilon)
+            #data, is_done, max_ind = self.gather_data(epsilon)
 
-            data = (data[0][:max_ind, :],
-                    data[1][:max_ind, :],
-                    data[2][:max_ind, :],
-                    data[3][:max_ind, :])
+            #data = (data[0][:max_ind, :],
+            #        data[1][:max_ind, :],
+            #        data[2][:max_ind, :],
+            #        data[3][:max_ind, :])
+            data = lspi_data
+            is_done = lspi_data[3].sum()
             old_theta = self.theta
             for j in range(20):
                 self.theta = self.train_step(alpha, data)
