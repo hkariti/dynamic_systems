@@ -8,7 +8,7 @@ class QLearningAgent:
     def __init__(self):
         self.game = MountainCarWithResetEnv()
         #self.theta = np.zeros((1, 18))
-        self.theta = np.zeros((1, 78))
+        self.theta = np.random.normal(size=(1, 78))
 
         # Constants used for data standardization
         self.pos_mu = (self.game.min_position + self.game.max_position)/2
@@ -22,6 +22,9 @@ class QLearningAgent:
         else:
             return self.game.reset()
 
+    def not_a(self, action):
+        return -(action -1) + 1
+
     def next_a(self, state):
         N = np.shape(state)[0]
 
@@ -31,9 +34,8 @@ class QLearningAgent:
         Q_est[:, 2] = self.theta.dot(self.extract_features(state, 2*np.ones(N)).T)
 
         action = np.argmax(Q_est, axis=1)
-        action = -(action - 1) + 1
 
-        return action
+        return self.not_a(action)
 
     def q_max(self, state):
         N = np.shape(state)[0]
@@ -135,7 +137,7 @@ class QLearningAgent:
         was_done = 0
         data_index = 0
         for g in range(games):
-            state = self.reset_random()
+            state = self.reset()
             state = state.reshape((1, 2))
             for i in range(iterations_per_game):
                 if np.random.uniform() > epsilon:
@@ -178,7 +180,7 @@ class QLearningAgent:
             step = self.extract_features(states[i].reshape((1, 2)), actions[i]) * coeff
             update_step += step
         max_element = np.max(np.abs(update_step))
-        return self.theta + alpha * update_step / max_element
+        return self.theta + alpha * update_step / (max_element or 1)
 
     def reset_random(self):
         init_state = (np.random.uniform(-1.2, 0.6), np.random.uniform(-0.07, 0.07))
