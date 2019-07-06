@@ -102,7 +102,7 @@ class QLearningAgent:
 
         plt.pause(0.1)
 
-    def train_online(self, epsilon=0.5, alpha=0.1, gamma=0.999, iterations=500):
+    def train_online(self, epsilon=1, alpha=1, gamma=0.999, iterations=30):
         state = self.reset()
         for i in range(iterations):
             if np.random.uniform() > epsilon:
