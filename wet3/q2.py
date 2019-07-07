@@ -206,7 +206,7 @@ class QLearningAgent:
                     data[2][:max_ind, :],
                     data[3][:max_ind, :])
             old_theta = self.theta
-            for j in range(20):
+            for j in range(10):
                 self.theta = self.train_step(alpha, data)
             theta_diff = self.theta - old_theta
 
