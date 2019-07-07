@@ -95,8 +95,6 @@ class QLearningAgent:
         N = self.vis_samples.shape[0]
         opt_a = self.next_a(self.vis_samples)
 
-        fsize = 22
-        plt.rcParams.update({'font.size': fsize})
         plt.clf()
         ac = [0, 1, 2]
         for a, color, label in zip(ac, ['tab:blue', 'tab:orange', 'tab:green'], ['LEFT', 'STAY', 'RIGHT']):
@@ -105,9 +103,9 @@ class QLearningAgent:
 
         plt.legend()
         plt.grid(True)
-        plt.title('Sample size - ' +str(N))
-        plt.xlabel('Position',fontsize=fsize)
-        plt.ylabel('Velocity',fontsize=fsize)
+        plt.title('Sample size - {}'.format(N))
+        plt.xlabel('Position')
+        plt.ylabel('Velocity')
 
         plt.pause(0.1)
 
