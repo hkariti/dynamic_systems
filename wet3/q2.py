@@ -8,21 +8,24 @@ from q1 import lspi_data_sample
 class QLearningAgent:
     def __init__(self):
         self.game = MountainCarWithResetEnv()
-        #self.theta = np.zeros((1, 18))
-        self.theta = np.random.normal(size=(1, 78))
+        self.reset_theta()
 
         # Constants used for data standardization
         self.pos_mu = (self.game.min_position + self.game.max_position)/2
         self.pos_sigma = (self.game.max_position - self.game.min_position)/np.sqrt(12)
         self.speed_mu = 0
         self.speed_sigma = 2*self.game.max_speed/np.sqrt(12)
+
+        # Cache of samples used for visualizing the policy
         self.vis_samples = None
 
+    def reset_theta(self):
+        self.theta = np.random.normal(size=(1, 78))
+
     def reset(self, state=None):
-        if state:
-            return self.game.reset_specific(*state)
-        else:
+        if state is None:
             return self.game.reset()
+        return self.game.reset_specific(*state)
 
     def not_a(self, action):
         return -(action -1) + 1
@@ -191,13 +194,12 @@ class QLearningAgent:
         init_state = (np.random.uniform(-1.2, 0.6), np.random.uniform(-0.07, 0.07))
         return self.reset(init_state)
 
-    def train(self, init_epsilon=1, init_alpha=1, max_iterations=30, visualise=True):
+    def train(self, init_epsilon=1, init_alpha=1, max_iterations=30, visualise=True, test_states=[]):
         alpha = init_alpha
         epsilon = init_epsilon
-        success_rates = np.empty(max_iterations)
+        success_rates = np.zeros((len(test_states), max_iterations))
         for i in range(max_iterations):
-            data, success_rate, max_ind = self.gather_data(epsilon)
-            success_rates[i] = success_rate
+            data, win_pct, max_ind = self.gather_data(epsilon)
 
             data = (data[0][:max_ind, :],
                     data[1][:max_ind, :],
@@ -210,12 +212,13 @@ class QLearningAgent:
 
             diff_max = np.max(np.abs(theta_diff))
             theta_max = np.max(np.abs(self.theta))
-            print("Iter", i, "game_iters", max_ind, "succ_rate", success_rate, "alpha", alpha, "ep", epsilon, "theta_new - theta (max) =", diff_max, "theta_max", theta_max)
+            success_rates[:, i] = self.test_train_iteration(test_states)
+            avg_rate = np.average(success_rates[:, i])
+            print("Iter", i, "train_iters", max_ind, "train_win_pct", win_pct, "test_win_pct", avg_rate, "alpha", alpha, "ep", epsilon, "theta_new - theta (max) =", diff_max, "theta_max", theta_max)
             epsilon = 0.9 * epsilon
             alpha = 0.8 * alpha
             if visualise:
                 self.visualize()
-            self.record_train_iteration(i)
         return success_rates
 
     def play(self, init_state=None, render=True, max_iterations=1000):
@@ -233,6 +236,49 @@ class QLearningAgent:
         self.game.close()
         return done
 
-    def record_train_iteration(self, iteration):
-        if (i % 10 == 0):
-            self.play()
+    def test_train_iteration(self, test_init_states):
+        results = np.zeros(len(test_init_states))
+        for state_idx, init_state in enumerate(test_init_states):
+            result = self.play(init_state, render=False)
+            results[state_idx] = int(result)
+
+        return results
+
+    def get_test_states(self, count=10):
+        return [(np.random.uniform(low=-0.6, high=-0.4), 0) for i in range(count)]
+
+    def test_model(self, training_cycles=5, test_states=None, **training_args):
+        success_rates = None
+        if test_states is None:
+            test_states = self.get_test_states()
+        for t in range(training_cycles):
+            self.reset_theta()
+            print("*** TRAINING TRIAL {} ***".format(t))
+            rates = self.train(test_states=test_states, **training_args)
+            print("*** RESULT ***")
+            print(rates)
+            if success_rates is None:
+                success_rates = rates
+            else:
+                success_rates += rates
+        success_rates /= training_cycles
+
+        return test_states, success_rates
+
+    def plot_success_rates(self, success_rates):
+        avg = np.average(success_rates, axis=0)
+        plt.plot(avg)
+        plt.title('Average success rate per iteration')
+        plt.xlabel('Iteration')
+        plt.ylabel('Success rate')
+        plt.show()
+
+if __name__ == '__main__':
+    q = QLearningAgent()
+    states, rates = q.test_model(visualise=False)
+    print("Training done")
+    print("Training states:", states)
+    print("Success rates:")
+    print(rates)
+
+    q.plot_success_rates(rates)
