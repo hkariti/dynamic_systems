@@ -253,7 +253,7 @@ class QLearningAgent:
             test_states = self.get_test_states()
         for t in range(training_cycles):
             self.reset_theta()
-            print("*** TRAINING TRIAL {} ***".format(t))
+            print("*** TRAINING EXPERIMENT {} ***".format(t))
             rates = self.train(test_states=test_states, **training_args)
             print("*** RESULT ***")
             print(rates)
