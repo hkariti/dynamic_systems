@@ -1,0 +1,38 @@
+## Overfiew of files
+
+* mountain_car_with_data_collection.py - file from moodle
+* q1.py - solves q1 and outputs the relevant output and graphs when run
+* q2.py - solves q2 and outputs the success rate graph 
+
+## Question 1 methods
+
+* lspi_data_sample() - samples the state space: state, action, next state, reward 
+* data_stats() - calculates the samples' empiriral mean and stddev for standardization purposes
+* e() - calculates the rbf output of the given states vector. the result is NxF, where F is the number of rbf kernels
+* feats() - converts a state vector into phi - dimentions Nx3F
+* next_a() - returns the next action given a state and current value for thtea
+* train_lspi() - takes the state samples and runs LSPI. returns the list of theta values for each iteration.
+* test_lspi() - trains LSPI for 10 different starting states, each one 5 times when plots and returns a matrix of success rates
+* visualize_lspi() - plots the policy visually. for debugging.
+
+## Question 2 methods
+
+All methods are of the QLearningAgent class which holds as members: the game, theta, static arguments for standardization.
+
+* gather_data - plays the game using an epsilon-greedy policy and returns the observed data: state, action, next state, reward. also returns the pct of won games.
+* train_step - does one batch update. samples from the gathered data and updates theta.
+* train - Traing the model. Runs trainig cycles of gathering data and calling train_step() several times. At the end of each cycle, runs test games and collects their score. Returns the score for the test games for each iteration.
+* test_model - runs train() several times and averages the returned test scores
+* play - Plays the game using the current policy for a limited number of iterations. Returns True if game is won.
+* reset_theta - drops current theta values and init them to random
+* reset - reset the game state to a given state or a random one via game.reset()
+* reset_random - resets the game to a random state using game.reset_random(0)
+* next_a - returns the best action according to the policy given a state
+* q_max - returns the maximum value of the approximated q given a state
+* q - reutrns the value of the approximated q given a state and action
+* extract_features - same as feats() in q1 - calculates phi(s)
+* rbf - same as e() in q1 - calculates the rbf values for a state
+* visualize - same as visualize_lspi() in q1. for debugging.
+* test_train_iteration - used by train() to run test games.
+* get_test_states - generates initial states to be used in test games. used by test_model()
+* plot_success_rates - averages the test games' scores and plots on a graph.
