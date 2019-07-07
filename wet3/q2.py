@@ -191,7 +191,7 @@ class QLearningAgent:
         init_state = (np.random.uniform(-1.2, 0.6), np.random.uniform(-0.07, 0.07))
         return self.reset(init_state)
 
-    def train(self, init_epsilon=1, init_alpha=1, max_iterations=30, visualise=False):
+    def train(self, init_epsilon=1, init_alpha=1, max_iterations=30, visualise=True):
         alpha = init_alpha
         epsilon = init_epsilon
         success_rates = np.empty(max_iterations)
