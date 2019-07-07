@@ -55,7 +55,7 @@ def e(s):
     # Implementation of RBF features
 
     # pos, speed statistics should be global
-    global pos_mu, pos_sigma, speed_mu, speed_sigma # Does this work? Hagai pls help
+    global pos_mu, pos_sigma, speed_mu, speed_sigma
     n_s = np.zeros(s.shape)
     n_s[:,0] = ( s[:,0] - pos_mu ) / pos_sigma
     n_s[:,1] = ( s[:,1] - speed_mu ) / speed_sigma
