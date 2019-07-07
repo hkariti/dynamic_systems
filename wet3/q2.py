@@ -106,29 +106,6 @@ class QLearningAgent:
 
         plt.pause(0.1)
 
-    def train_online(self, epsilon=1, alpha=1, gamma=0.999, iterations=30):
-        state = self.reset()
-        for i in range(iterations):
-            if np.random.uniform() > epsilon:
-                rand = False
-                action = self.next_a(state.reshape((1, 2)))[0]
-            else:
-                rand = True
-                action = np.random.choice(3)
-            print(action)
-            next_state, reward, is_done, _ = self.game.step(action)
-            coeff = reward + gamma * self.q_max(next_state.reshape((1, 2))) - self.q(state.reshape((1, 2)), np.array([action]))
-            update_step = self.extract_features(state.reshape((1, 2)), np.array([action])) * coeff
-            old_theta = self.theta.copy()
-            self.theta += alpha * update_step
-            diff = np.max(np.abs(self.theta - old_theta))
-            state = next_state
-            print("Iteration", i, "diff", diff)
-            if is_done:
-                print("Done on iteration", i)
-                return 1
-        return 0
-
     def gather_data(self, epsilon, iterations_per_game=1000, games=5):
         states = np.zeros((iterations_per_game*games, 2))
         actions = np.zeros((iterations_per_game*games, 1))
