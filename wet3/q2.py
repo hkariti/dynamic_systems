@@ -266,6 +266,7 @@ class QLearningAgent:
         return test_states, success_rates
 
     def plot_success_rates(self, success_rates):
+        plt.figure()
         avg = np.average(success_rates, axis=0)
         plt.plot(avg)
         plt.title('Average success rate per iteration')
