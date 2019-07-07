@@ -191,9 +191,7 @@ class QLearningAgent:
         init_state = (np.random.uniform(-1.2, 0.6), np.random.uniform(-0.07, 0.07))
         return self.reset(init_state)
 
-    def train(self, init_state=None, init_epsilon=1, init_alpha=1, max_iterations=30, visualise=False):
-        #_, states, actions, rewards, next_states = q1.lspi_data_sample(10000)
-        #data = (states, actions.reshape((10000, 1)), next_states, rewards)
+    def train(self, init_epsilon=1, init_alpha=1, max_iterations=30, visualise=False, monitor_func=None):
         alpha = init_alpha
         epsilon = init_epsilon
         success_rates = np.empty(max_iterations)
@@ -217,6 +215,8 @@ class QLearningAgent:
             alpha = 0.8 * alpha
             if visualise:
                 self.visualize()
+            if monitor_func:
+                monitor_func(i, data, alpha, epsilon, self.theta, old_theta)
         return success_rates
 
     def play(self, init_state=None, render=True, max_iterations=1000):
