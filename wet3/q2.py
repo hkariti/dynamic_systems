@@ -219,8 +219,8 @@ class QLearningAgent:
                 self.visualize()
         return success_rates
 
-    def play(self, render=True, max_iterations=1000):
-        state = self.reset().reshape((1,2))
+    def play(self, init_state=None, render=True, max_iterations=1000):
+        state = self.reset(init_state).reshape((1,2))
         done = False
         for i in range(max_iterations):
             action = int(self.next_a(state))
