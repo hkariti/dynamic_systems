@@ -191,7 +191,7 @@ class QLearningAgent:
         init_state = (np.random.uniform(-1.2, 0.6), np.random.uniform(-0.07, 0.07))
         return self.reset(init_state)
 
-    def train(self, init_epsilon=1, init_alpha=1, max_iterations=30, visualise=False, monitor_func=None):
+    def train(self, init_epsilon=1, init_alpha=1, max_iterations=30, visualise=False):
         alpha = init_alpha
         epsilon = init_epsilon
         success_rates = np.empty(max_iterations)
@@ -215,8 +215,7 @@ class QLearningAgent:
             alpha = 0.8 * alpha
             if visualise:
                 self.visualize()
-            if monitor_func:
-                monitor_func(i, data, alpha, epsilon, self.theta, old_theta)
+            self.record_train_iteration(i)
         return success_rates
 
     def play(self, init_state=None, render=True, max_iterations=1000):
@@ -234,3 +233,6 @@ class QLearningAgent:
         self.game.close()
         return done
 
+    def record_train_iteration(self, iteration):
+        if (i % 10 == 0):
+            self.play()
