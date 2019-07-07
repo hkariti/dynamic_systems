@@ -27,9 +27,6 @@ class QLearningAgent:
             return self.game.reset()
         return self.game.reset_specific(*state)
 
-    def not_a(self, action):
-        return -(action -1) + 1
-
     def next_a(self, state):
         N = np.shape(state)[0]
 
@@ -40,7 +37,7 @@ class QLearningAgent:
 
         action = np.argmax(Q_est, axis=1)
 
-        return self.not_a(action)
+        return 2 - action
 
     def q_max(self, state):
         N = np.shape(state)[0]
