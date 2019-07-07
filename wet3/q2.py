@@ -219,14 +219,18 @@ class QLearningAgent:
                 self.visualize()
         return success_rates
 
-    def play(self):
+    def play(self, render=True, max_iterations=1000):
         state = self.reset().reshape((1,2))
-        for i in range(1000):
+        done = False
+        for i in range(max_iterations):
             action = int(self.next_a(state))
             next_state, reward, is_done, _ = self.game.step(action)
-            self.game.render()
+            if render:
+                self.game.render()
             state = np.array(next_state).reshape((1,2))
             if is_done:
+                done = True
                 break
         self.game.close()
+        return done
 
